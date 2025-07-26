@@ -31,7 +31,7 @@ jobs:
         CIBW_BEFORE_BUILD_MACOS: pip install setuptools wheel
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
         path: ./wheelhouse/*.whl
@@ -47,7 +47,7 @@ jobs:
       run: pipx run build --sdist
 
     - name: Upload sdist
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cibw-sdist
         path: dist/*.tar.gz

@@ -34,8 +34,8 @@ jobs:
         # Python 3.8-3.11をサポート
         CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
         # テストコマンド
-        CIBW_TEST_COMMAND: "python -c 'import audio_devices; print(\"✅ Import successful\")'"
-
+        # CIBW_TEST_COMMAND: "python -c 'import audio_devices; print(\"✅ Import successful\")'"
+        CIBW_TEST_COMMAND: "python -c \"import audio_devices; print('✅ Import successful')\""
     - name: Upload wheels as artifacts
       uses: actions/upload-artifact@v4
       with:

@@ -3,41 +3,278 @@
 #include <mmdeviceapi.h>
 #include <functiondiscoverykeys_devpkey.h>
 #include <atlbase.h>
+#include <propvarutil.h>
+#include <audioclient.h>
 
+// 基本的なUID形式での出力（macOSの list_device_uids に対応）
 static PyObject* list_device_ids(PyObject* self, PyObject* args) {
-    PyObject* devices = PyList_New(0);
+    PyObject* device_list = PyList_New(0);
     HRESULT hr = CoInitialize(NULL);
-    if (FAILED(hr)) return devices;
+    if (FAILED(hr)) return device_list;
 
     CComPtr<IMMDeviceEnumerator> pEnum;
     hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, IID_PPV_ARGS(&pEnum));
     if (FAILED(hr)) {
         CoUninitialize();
-        return devices;
+        return device_list;
     }
 
-    CComPtr<IMMDeviceCollection> pColl;
-    hr = pEnum->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &pColl);
+    // 入力デバイス（キャプチャ）
+    CComPtr<IMMDeviceCollection> pInputColl;
+    hr = pEnum->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &pInputColl);
     if (SUCCEEDED(hr)) {
         UINT count = 0;
-        pColl->GetCount(&count);
+        pInputColl->GetCount(&count);
         for (UINT i = 0; i < count; ++i) {
             CComPtr<IMMDevice> pDevice;
-            if (SUCCEEDED(pColl->Item(i, &pDevice))) {
+            if (SUCCEEDED(pInputColl->Item(i, &pDevice))) {
+                // デバイス名を取得
+                CComPtr<IPropertyStore> pProps;
+                WCHAR nameBuffer[256] = L"Unknown Device";
+                if (SUCCEEDED(pDevice->OpenPropertyStore(STGM_READ, &pProps))) {
+                    PROPVARIANT varName;
+                    PropVariantInit(&varName);
+                    if (SUCCEEDED(pProps->GetValue(PKEY_Device_FriendlyName, &varName))) {
+                        if (varName.vt == VT_LPWSTR) {
+                            wcscpy_s(nameBuffer, 256, varName.pwszVal);
+                        }
+                        PropVariantClear(&varName);
+                    }
+                }
+
+                // デバイスIDを取得
                 LPWSTR id = NULL;
+                WCHAR idBuffer[512] = L"unknown-id";
                 if (SUCCEEDED(pDevice->GetId(&id))) {
-                    PyList_Append(devices, PyUnicode_FromWideChar(id, wcslen(id)));
+                    wcscpy_s(idBuffer, 512, id);
                     CoTaskMemFree(id);
                 }
+
+                // "devicename: deviceid" 形式の文字列を作成
+                WCHAR result[768];
+                swprintf_s(result, 768, L"%s: %s", nameBuffer, idBuffer);
+                
+                // Unicodeからchar*への変換
+                char utf8Result[768 * 3]; // UTF-8は最大3バイト/文字
+                WideCharToMultiByte(CP_UTF8, 0, result, -1, utf8Result, sizeof(utf8Result), NULL, NULL);
+                
+                PyList_Append(device_list, PyUnicode_FromString(utf8Result));
             }
         }
     }
+
+    // 出力デバイス（レンダー）
+    CComPtr<IMMDeviceCollection> pOutputColl;
+    hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pOutputColl);
+    if (SUCCEEDED(hr)) {
+        UINT count = 0;
+        pOutputColl->GetCount(&count);
+        for (UINT i = 0; i < count; ++i) {
+            CComPtr<IMMDevice> pDevice;
+            if (SUCCEEDED(pOutputColl->Item(i, &pDevice))) {
+                // デバイス名を取得
+                CComPtr<IPropertyStore> pProps;
+                WCHAR nameBuffer[256] = L"Unknown Device";
+                if (SUCCEEDED(pDevice->OpenPropertyStore(STGM_READ, &pProps))) {
+                    PROPVARIANT varName;
+                    PropVariantInit(&varName);
+                    if (SUCCEEDED(pProps->GetValue(PKEY_Device_FriendlyName, &varName))) {
+                        if (varName.vt == VT_LPWSTR) {
+                            wcscpy_s(nameBuffer, 256, varName.pwszVal);
+                        }
+                        PropVariantClear(&varName);
+                    }
+                }
+
+                // デバイスIDを取得
+                LPWSTR id = NULL;
+                WCHAR idBuffer[512] = L"unknown-id";
+                if (SUCCEEDED(pDevice->GetId(&id))) {
+                    wcscpy_s(idBuffer, 512, id);
+                    CoTaskMemFree(id);
+                }
+
+                // "devicename: deviceid" 形式の文字列を作成
+                WCHAR result[768];
+                swprintf_s(result, 768, L"%s: %s", nameBuffer, idBuffer);
+                
+                // Unicodeからchar*への変換
+                char utf8Result[768 * 3];
+                WideCharToMultiByte(CP_UTF8, 0, result, -1, utf8Result, sizeof(utf8Result), NULL, NULL);
+                
+                PyList_Append(device_list, PyUnicode_FromString(utf8Result));
+            }
+        }
+    }
+
     CoUninitialize();
-    return devices;
+    return device_list;
+}
+
+// 詳細情報付きの出力（macOSの list_device_details に対応）
+static PyObject* list_device_details(PyObject* self, PyObject* args) {
+    PyObject* device_list = PyList_New(0);
+    HRESULT hr = CoInitialize(NULL);
+    if (FAILED(hr)) return device_list;
+
+    CComPtr<IMMDeviceEnumerator> pEnum;
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, IID_PPV_ARGS(&pEnum));
+    if (FAILED(hr)) {
+        CoUninitialize();
+        return device_list;
+    }
+
+    // 入力デバイス（キャプチャ）を処理
+    CComPtr<IMMDeviceCollection> pInputColl;
+    hr = pEnum->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &pInputColl);
+    if (SUCCEEDED(hr)) {
+        UINT count = 0;
+        pInputColl->GetCount(&count);
+        for (UINT i = 0; i < count; ++i) {
+            CComPtr<IMMDevice> pDevice;
+            if (SUCCEEDED(pInputColl->Item(i, &pDevice))) {
+                PyObject *device_dict = PyDict_New();
+
+                // デバイス名
+                CComPtr<IPropertyStore> pProps;
+                char nameBuffer[256] = "Unknown Device";
+                if (SUCCEEDED(pDevice->OpenPropertyStore(STGM_READ, &pProps))) {
+                    PROPVARIANT varName;
+                    PropVariantInit(&varName);
+                    if (SUCCEEDED(pProps->GetValue(PKEY_Device_FriendlyName, &varName))) {
+                        if (varName.vt == VT_LPWSTR) {
+                            WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, nameBuffer, sizeof(nameBuffer), NULL, NULL);
+                        }
+                        PropVariantClear(&varName);
+                    }
+                }
+
+                // デバイスID（UID相当）
+                LPWSTR id = NULL;
+                char idBuffer[512] = "unknown-id";
+                if (SUCCEEDED(pDevice->GetId(&id))) {
+                    WideCharToMultiByte(CP_UTF8, 0, id, -1, idBuffer, sizeof(idBuffer), NULL, NULL);
+                    CoTaskMemFree(id);
+                }
+
+                // メーカー名
+                char manufacturerBuffer[256] = "Unknown";
+                if (pProps) {
+                    PROPVARIANT varManufacturer;
+                    PropVariantInit(&varManufacturer);
+                    if (SUCCEEDED(pProps->GetValue(PKEY_DeviceInterface_FriendlyName, &varManufacturer))) {
+                        if (varManufacturer.vt == VT_LPWSTR) {
+                            WideCharToMultiByte(CP_UTF8, 0, varManufacturer.pwszVal, -1, manufacturerBuffer, sizeof(manufacturerBuffer), NULL, NULL);
+                        }
+                        PropVariantClear(&varManufacturer);
+                    }
+                }
+
+                // チャンネル数を取得
+                UINT32 inputChannels = 0;
+                UINT32 outputChannels = 0;
+                CComPtr<IAudioClient> pAudioClient;
+                if (SUCCEEDED(pDevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&pAudioClient))) {
+                    WAVEFORMATEX *pWfx = NULL;
+                    if (SUCCEEDED(pAudioClient->GetMixFormat(&pWfx))) {
+                        inputChannels = pWfx->nChannels;  // 入力デバイスなので入力チャンネル
+                        CoTaskMemFree(pWfx);
+                    }
+                }
+
+                // 辞書に値を設定
+                PyDict_SetItemString(device_dict, "name", PyUnicode_FromString(nameBuffer));
+                PyDict_SetItemString(device_dict, "uid", PyUnicode_FromString(idBuffer));
+                PyDict_SetItemString(device_dict, "manufacturer", PyUnicode_FromString(manufacturerBuffer));
+                PyDict_SetItemString(device_dict, "input_channels", PyLong_FromUnsignedLong(inputChannels));
+                PyDict_SetItemString(device_dict, "output_channels", PyLong_FromUnsignedLong(0)); // 入力デバイス
+                PyDict_SetItemString(device_dict, "device_type", PyUnicode_FromString("input"));
+
+                PyList_Append(device_list, device_dict);
+                Py_DECREF(device_dict);
+            }
+        }
+    }
+
+    // 出力デバイス（レンダー）を処理
+    CComPtr<IMMDeviceCollection> pOutputColl;
+    hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pOutputColl);
+    if (SUCCEEDED(hr)) {
+        UINT count = 0;
+        pOutputColl->GetCount(&count);
+        for (UINT i = 0; i < count; ++i) {
+            CComPtr<IMMDevice> pDevice;
+            if (SUCCEEDED(pOutputColl->Item(i, &pDevice))) {
+                PyObject *device_dict = PyDict_New();
+
+                // デバイス名
+                CComPtr<IPropertyStore> pProps;
+                char nameBuffer[256] = "Unknown Device";
+                if (SUCCEEDED(pDevice->OpenPropertyStore(STGM_READ, &pProps))) {
+                    PROPVARIANT varName;
+                    PropVariantInit(&varName);
+                    if (SUCCEEDED(pProps->GetValue(PKEY_Device_FriendlyName, &varName))) {
+                        if (varName.vt == VT_LPWSTR) {
+                            WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, nameBuffer, sizeof(nameBuffer), NULL, NULL);
+                        }
+                        PropVariantClear(&varName);
+                    }
+                }
+
+                // デバイスID（UID相当）
+                LPWSTR id = NULL;
+                char idBuffer[512] = "unknown-id";
+                if (SUCCEEDED(pDevice->GetId(&id))) {
+                    WideCharToMultiByte(CP_UTF8, 0, id, -1, idBuffer, sizeof(idBuffer), NULL, NULL);
+                    CoTaskMemFree(id);
+                }
+
+                // メーカー名
+                char manufacturerBuffer[256] = "Unknown";
+                if (pProps) {
+                    PROPVARIANT varManufacturer;
+                    PropVariantInit(&varManufacturer);
+                    if (SUCCEEDED(pProps->GetValue(PKEY_DeviceInterface_FriendlyName, &varManufacturer))) {
+                        if (varManufacturer.vt == VT_LPWSTR) {
+                            WideCharToMultiByte(CP_UTF8, 0, varManufacturer.pwszVal, -1, manufacturerBuffer, sizeof(manufacturerBuffer), NULL, NULL);
+                        }
+                        PropVariantClear(&varManufacturer);
+                    }
+                }
+
+                // チャンネル数を取得
+                UINT32 inputChannels = 0;
+                UINT32 outputChannels = 0;
+                CComPtr<IAudioClient> pAudioClient;
+                if (SUCCEEDED(pDevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&pAudioClient))) {
+                    WAVEFORMATEX *pWfx = NULL;
+                    if (SUCCEEDED(pAudioClient->GetMixFormat(&pWfx))) {
+                        outputChannels = pWfx->nChannels;  // 出力デバイスなので出力チャンネル
+                        CoTaskMemFree(pWfx);
+                    }
+                }
+
+                // 辞書に値を設定
+                PyDict_SetItemString(device_dict, "name", PyUnicode_FromString(nameBuffer));
+                PyDict_SetItemString(device_dict, "uid", PyUnicode_FromString(idBuffer));
+                PyDict_SetItemString(device_dict, "manufacturer", PyUnicode_FromString(manufacturerBuffer));
+                PyDict_SetItemString(device_dict, "input_channels", PyLong_FromUnsignedLong(0)); // 出力デバイス
+                PyDict_SetItemString(device_dict, "output_channels", PyLong_FromUnsignedLong(outputChannels));
+                PyDict_SetItemString(device_dict, "device_type", PyUnicode_FromString("output"));
+
+                PyList_Append(device_list, device_dict);
+                Py_DECREF(device_dict);
+            }
+        }
+    }
+
+    CoUninitialize();
+    return device_list;
 }
 
 static PyMethodDef methods[] = {
-    {"list_device_ids", list_device_ids, METH_NOARGS, "List audio device IDs (Windows)"},
+    {"list_device_ids", list_device_ids, METH_NOARGS, "List audio devices in 'name: id' format (Windows)"},
+    {"list_device_details", list_device_details, METH_NOARGS, "List audio devices with detailed information (Windows)"},
     {NULL, NULL, 0, NULL}
 };
 

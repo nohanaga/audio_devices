@@ -42,6 +42,6 @@ where = ["src"]
 
 [tool.setuptools_scm]
 write_to = "src/audio_devices/_version.py"
-version_scheme = "guess-next-dev"
+version_scheme = "post-release"
 local_scheme = "no-local-version"
 fallback_version = "0.1.0"

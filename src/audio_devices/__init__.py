@@ -7,16 +7,16 @@ Cross-platform library for listing audio devices.
 import sys
 
 __version__ = "0.1.0"
-__all__ = ["list_audio_devices", "list_device_details", "list_devices_by_type"]
+__all__ = ["list_device_uids", "list_device_details", "list_devices_by_type"]
 
 if sys.platform == "darwin":
     # macOS用
     try:
-        from ._audio_devices import list_device_uids as list_audio_devices
+        from ._audio_devices import list_device_uids
         from ._audio_devices import list_device_details
         from ._audio_devices import list_devices_by_type
     except ImportError as e:
-        def list_audio_devices():
+        def list_device_uids():
             raise ImportError(f"Failed to import macOS audio extension: {e}")
         
         def list_device_details():
@@ -28,11 +28,11 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
     # Windows用
     try:
-        from ._audio_devices import list_device_ids as list_audio_devices
+        from ._audio_devices import list_device_uids
         from ._audio_devices import list_device_details
         from ._audio_devices import list_devices_by_type
     except ImportError as e:
-        def list_audio_devices():
+        def list_device_uids():
             raise ImportError(f"Failed to import Windows audio extension: {e}")
         
         def list_device_details():
@@ -43,7 +43,7 @@ elif sys.platform == "win32":
 
 else:
     # その他のOS（Linux等）
-    def list_audio_devices():
+    def list_device_uids():
         """List audio devices (not supported on this platform)"""
         raise NotImplementedError(f"Audio device listing not supported on {sys.platform}")
     
@@ -55,6 +55,9 @@ else:
         """List devices by type (not supported on this platform)"""
         raise NotImplementedError(f"Device type filtering not supported on {sys.platform}")
 
+
+# 後方互換性のためのエイリアス
+list_audio_devices = list_device_uids
 
 # 便利な関数を追加
 def get_input_devices():
@@ -74,7 +77,7 @@ def get_platform_info():
     """Get information about the current platform and available features"""
     platform_info = {
         "platform": sys.platform,
-        "list_audio_devices": "list_audio_devices" in globals(),
+        "list_device_uids": "list_device_uids" in globals(),
         "list_device_details": "list_device_details" in globals(),
         "list_devices_by_type": "list_devices_by_type" in globals(),
     }

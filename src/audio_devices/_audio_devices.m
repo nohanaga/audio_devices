@@ -320,7 +320,7 @@ static PyObject* list_device_details(PyObject* self, PyObject* args) {
 
 // メソッド定義を更新
 static PyMethodDef methods[] = {
-    {"list_device_uids", list_device_uids, METH_NOARGS, "List audio devices as structured dict list (macOS)"},
+    {"list_device_uids", list_device_uids, METH_NOARGS, "List audio devices in 'name: uid' format (macOS)"},
     {"list_device_details", list_device_details, METH_NOARGS, "List audio devices with detailed information (macOS)"},
     {"list_devices_by_type", list_devices_by_type, METH_VARARGS, "List audio devices filtered by type: 'all', 'input', or 'output' (macOS)"},
     {NULL, NULL, 0, NULL}

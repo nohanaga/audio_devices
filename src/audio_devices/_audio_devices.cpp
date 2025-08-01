@@ -7,7 +7,7 @@
 #include <audioclient.h>
 
 // 基本的なUID形式での出力（macOSの list_device_uids に対応）
-static PyObject* list_device_ids(PyObject* self, PyObject* args) {
+static PyObject* list_device_uids(PyObject* self, PyObject* args) {
     PyObject* device_list = PyList_New(0);
     HRESULT hr = CoInitialize(NULL);
     if (FAILED(hr)) return device_list;
@@ -450,7 +450,7 @@ static PyObject* list_devices_by_type(PyObject* self, PyObject* args) {
 }
 
 static PyMethodDef methods[] = {
-    {"list_device_ids", list_device_ids, METH_NOARGS, "List audio devices in 'name: id' format (Windows)"},
+    {"list_device_uids", list_device_uids, METH_NOARGS, "List audio devices in 'name: id' format (Windows)"},
     {"list_device_details", list_device_details, METH_NOARGS, "List audio devices with detailed information (Windows)"},
     {"list_devices_by_type", list_devices_by_type, METH_VARARGS, "List audio devices filtered by type: 'all', 'input', or 'output' (Windows)"},
     {NULL, NULL, 0, NULL}

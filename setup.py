@@ -17,10 +17,6 @@ elif sys.platform == "win32":
     ))
 
 setup(
-    name="audio_devices",
-    version="0.1.0",
-    packages=["audio_devices"],
-    package_dir={"": "src"},
     ext_modules=ext_modules,
     zip_safe=False,
 )

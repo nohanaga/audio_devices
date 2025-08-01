@@ -6,7 +6,17 @@ Cross-platform library for listing audio devices.
 
 import sys
 
-__version__ = "0.1.0"
+# setuptools-scmによるバージョン管理
+try:
+    from ._version import version as __version__
+except ImportError:
+    # フォールバック: setuptools-scmが利用できない場合
+    try:
+        from importlib.metadata import version
+        __version__ = version("audio_devices")
+    except ImportError:
+        __version__ = "unknown"
+
 __all__ = ["list_device_uids", "list_device_details", "list_devices_by_type"]
 
 if sys.platform == "darwin":

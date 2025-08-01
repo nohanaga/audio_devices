@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audio_devices"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Audio device enumeration library"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "nohanaga", email = "your.email@example.com"}
 ]
 
 [tool.setuptools.packages.find]
@@ -18,3 +18,8 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.setuptools_scm]
+write_to = "src/audio_devices/_version.py"
+version_scheme = "post-release"
+local_scheme = "dirty-tag"

@@ -43,23 +43,24 @@ jobs:
         name: wheels-${{ matrix.os }}
         path: ./wheelhouse/*.whl
 
-  # upload_pypi:
-  #   name: Upload to PyPI
-  #   needs: [build_wheels]
-  #   runs-on: ubuntu-latest
-  #   if: github.event_name == 'release' && github.event.action == 'published'
-  #   
-  #   steps:
-  #   - name: Download all artifacts
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       path: dist
-  #       merge-multiple: true
+  upload_pypi:
+    name: Upload to PyPI
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    # if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        merge-multiple: true
 
-  #   - name: Publish to PyPI
-  #     uses: pypa/gh-action-pypi-publish@release/v1
-  #     with:
-  #       password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        repository-url: https://test.pypi.org/legacy/
 
   upload_release:
     name: Upload to GitHub Release

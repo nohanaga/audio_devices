@@ -1,4 +1,4 @@
-# Audio Devices
+# Audio Devices for Azure Speech SDK
 
 [![Build Wheels](https://github.com/nohanaga/audio_devices/actions/workflows/build-wheels-cibuildwheel.yml/badge.svg)](https://github.com/nohanaga/audio_devices/actions/workflows/build-wheels-cibuildwheel.yml)
 

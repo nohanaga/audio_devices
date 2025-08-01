@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel", "setuptools-scm[toml]>=6.2"]
+requires = ["setuptools>=64", "wheel", "setuptools-scm[toml]>=7.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Cross-platform audio device enumeration library"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {file = "LICENSE"}
+license = {text = "MIT"}
 authors = [
     {name = "nohanaga", email = "your.email@example.com"}
 ]

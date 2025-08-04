@@ -4,6 +4,15 @@
 
 Cross-platform audio device enumeration library for Python.
 
+The Azure Speech SDK requires obtaining audio device IDs from device names for input devices. Unfortunately, this specification makes it difficult to retrieve device information without using native code on each operating system. To address this challenge, we have created a cross-platform Python library that wraps native code, providing a seamless solution for audio device management across different platforms.
+
+This library simplifies the process of:
+- Enumerating available audio input devices
+- Retrieving device IDs required by Azure Speech SDK
+- Working consistently across Windows, macOS, and other supported platforms
+
+By handling the native code complexity behind a simple Python interface, developers can focus on building their speech-enabled applications without worrying about platform-specific audio device handling.
+
 ## Features
 
 - List audio input/output devices with detailed information

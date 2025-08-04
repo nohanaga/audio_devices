@@ -15,13 +15,7 @@ Cross-platform audio device enumeration library for Python.
 ## Installation
 
 ```bash
-# From source
-git clone https://github.com/nohanaga/audio_devices.git
-cd audio_devices
-pip install -e .
-
-# Or install from wheel (download from GitHub Releases)
-pip install audio_devices-0.1.0-cp39-cp39-macosx_10_9_x86_64.whl
+pip install audio_devices
 ```
 
 ## Usage

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "setuptools-scm[toml]>=7.0"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "audio_devices"
-dynamic = ["version"]
+version = "0.2.0"
 description = "Cross-platform audio device enumeration library"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -40,8 +40,4 @@ where = ["src"]
 [tool.setuptools.package-dir]
 "" = "src"
 
-[tool.setuptools_scm]
-write_to = "src/audio_devices/_version.py"
-version_scheme = "post-release"
-local_scheme = "no-local-version"
-fallback_version = "0.1.0"
+

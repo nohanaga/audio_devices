@@ -123,3 +123,9 @@ Wheels are automatically built for multiple platforms using GitHub Actions:
 ## License
 
 MIT License
+
+
+## Acknowledgements
+This code is based on the following code provided by Microsoft.
+
+https://learn.microsoft.com/azure/ai-services/speech-service/how-to-select-audio-input-devices
